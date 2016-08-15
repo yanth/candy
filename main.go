@@ -27,7 +27,7 @@ func main() {
 		}
 
 	case "take":
-		fmt.Println("take")
+		take()
 
 	default:
 		fmt.Printf("%s\n", usage())
@@ -52,12 +52,6 @@ func init() {
 func drop() {
 	historyWrite()
 	candyWrite()
-}
-
-func take() {
-	// 案1:カレントディレクトリcandyを取る
-	// 案2:再帰的に上に上がっていく
-	// 案3:.candy\droped から取得する
 }
 
 func historyWrite() {
@@ -96,6 +90,35 @@ func candyWrite() {
 	path := getCandyPath()
 
 	fileWriter(path, str)
+}
+
+func take() {
+	// カレントディレクトリcandyを取る
+	// todo: 引数にpathの文字列配列を入れて、空配列なら
+	//       カレントディレクトリの.candyを読みだす。
+	//       普段は配列を読み取る。無ければスルー
+	filepath := path.Join(getCurrentPath(), ".candy")
+	fp, err := os.OpenFile(filepath, os.O_RDONLY, 0644)
+	if err != nil {
+		fmt.Errorf("%s\n", err)
+	}
+
+	fmt.Printf("=== %s\n", filepath)
+
+	var line string
+	scan := bufio.NewScanner(fp)
+	for scan.Scan() {
+		line = scan.Text()
+		if err = scan.Err(); err != nil {
+			panic(err)
+		}
+
+		fmt.Printf("  - %s\n", line)
+	}
+}
+
+func takes() {
+	// .candy\droped から取得する
 }
 
 func nowtime() string {
