@@ -92,28 +92,33 @@ func candyWrite() {
 	fileWriter(path, str)
 }
 
-func take() {
-	// カレントディレクトリcandyを取る
-	// todo: 引数にpathの文字列配列を入れて、空配列なら
-	//       カレントディレクトリの.candyを読みだす。
-	//       普段は配列を読み取る。無ければスルー
-	filepath := path.Join(getCurrentPath(), ".candy")
-	fp, err := os.OpenFile(filepath, os.O_RDONLY, 0644)
-	if err != nil {
-		fmt.Errorf("%s\n", err)
+func take(paths ...string) {
+	// 受け取った .candy パスの配列を対象に .candy を読みだす。
+	// 何も引数に無ければカレントディレクトリcandyを取る
+	if len(paths) <= 0 {
+		paths = append(paths, path.Join(getCurrentPath(), ".candy"))
 	}
 
-	fmt.Printf("=== %s\n", filepath)
-
-	var line string
-	scan := bufio.NewScanner(fp)
-	for scan.Scan() {
-		line = scan.Text()
-		if err = scan.Err(); err != nil {
-			panic(err)
+	for _, p := range paths {
+		fp, err := os.OpenFile(p, os.O_RDONLY, 0644)
+		if err != nil {
+			fmt.Errorf("%s\n", err)
 		}
 
-		fmt.Printf("  - %s\n", line)
+		var line string
+		scan := bufio.NewScanner(fp)
+
+		fmt.Printf("=== %s\n", p)
+		for scan.Scan() {
+			line = scan.Text()
+			if err = scan.Err(); err != nil {
+				panic(err)
+			}
+
+			fmt.Printf("  - %s\n", line)
+		}
+
+		fmt.Println()
 	}
 }
 
