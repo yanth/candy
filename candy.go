@@ -27,7 +27,10 @@ func main() {
 		}
 
 	case "take":
-		take()
+		take(make([]string, 0))
+
+	case "takes":
+		takes()
 
 	default:
 		fmt.Printf("%s\n", usage())
@@ -45,7 +48,7 @@ func init() {
 		panic(err)
 	}
 
-	confDir := path.Join(home, ".candy")
+	confDir := path.Join(home, ".candy.d")
 	os.Mkdir(confDir, 0777)
 }
 
@@ -64,7 +67,7 @@ func historyWrite() {
 }
 
 func containHistory(historyPath string, path string) bool {
-	fp, err := os.OpenFile(historyPath, os.O_RDONLY, 0644)
+	fp, err := os.OpenFile(historyPath, os.O_CREATE|os.O_RDONLY, 0644)
 	if err != nil {
 		panic(err)
 	}
@@ -92,7 +95,7 @@ func candyWrite() {
 	fileWriter(path, str)
 }
 
-func take(paths ...string) {
+func take(paths []string) {
 	// 受け取った .candy パスの配列を対象に .candy を読みだす。
 	// 何も引数に無ければカレントディレクトリcandyを取る
 	if len(paths) <= 0 {
@@ -102,7 +105,8 @@ func take(paths ...string) {
 	for _, p := range paths {
 		fp, err := os.OpenFile(p, os.O_RDONLY, 0644)
 		if err != nil {
-			fmt.Errorf("%s\n", err)
+			panic(err)
+			os.Exit(1)
 		}
 
 		var line string
@@ -110,11 +114,10 @@ func take(paths ...string) {
 
 		fmt.Printf("=== %s\n", p)
 		for scan.Scan() {
-			line = scan.Text()
 			if err = scan.Err(); err != nil {
-				panic(err)
+				continue
 			}
-
+			line = scan.Text()
 			fmt.Printf("  - %s\n", line)
 		}
 
@@ -124,6 +127,25 @@ func take(paths ...string) {
 
 func takes() {
 	// .candy\droped から取得する
+	p := getHistoryPath()
+	fp, err := os.OpenFile(p, os.O_RDONLY, 0644)
+	if err != nil {
+		panic(err)
+		os.Exit(1)
+	}
+	defer fp.Close()
+
+	lines := make([]string, 0)
+	scan := bufio.NewScanner(fp)
+	for scan.Scan() {
+		lines = append(lines, scan.Text())
+
+		if err = scan.Err(); err != nil {
+			panic(err)
+		}
+	}
+
+	take(lines)
 }
 
 func nowtime() string {
@@ -138,7 +160,7 @@ func getHistoryPath() string {
 		panic(err)
 	}
 
-	return path.Join(home, ".candy", "droped")
+	return path.Join(home, ".candy.d", "droped")
 }
 
 func getCandyPath() string {
