@@ -6,6 +6,7 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"time"
 )
@@ -53,8 +54,8 @@ func init() {
 }
 
 func drop() {
-	historyWrite()
 	candyWrite()
+	historyWrite()
 }
 
 func historyWrite() {
@@ -63,6 +64,7 @@ func historyWrite() {
 
 	if !containHistory(history, current) {
 		fileWriter(history, current)
+		sortHistory()
 	}
 }
 
@@ -86,6 +88,40 @@ func containHistory(historyPath string, path string) bool {
 		}
 	}
 	return false
+}
+
+func sortHistory() {
+	fp, err := os.OpenFile(getHistoryPath(), os.O_RDONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	historys := make([]string, 0)
+	scan := bufio.NewScanner(fp)
+	for scan.Scan() {
+		if err = scan.Err(); err != nil {
+			panic(err)
+		}
+
+		historys = append(historys, scan.Text())
+	}
+	fp.Close()
+
+	sort.Strings(historys)
+
+	fp, err = os.OpenFile(getHistoryPath(), os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	var line, writeStr string
+	writer := bufio.NewWriter(fp)
+
+	for _, line = range historys {
+		writeStr += (line + "\n")
+	}
+	_, err = writer.WriteString(writeStr)
+	writer.Flush()
 }
 
 func candyWrite() {
